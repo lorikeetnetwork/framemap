@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Network, Expand, Minimize2, RotateCcw, Save, AlertCircle } from "lucide-react";
+import { Network, Expand, Minimize2, RotateCcw, Save, AlertCircle, LayoutGrid } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TreeNode from "./TreeNode";
 import SearchBar from "./SearchBar";
@@ -198,7 +199,7 @@ const FrameworkMap = () => {
                   variant="outline"
                   size="sm"
                   onClick={expandAll}
-                  className="border-tree-line hover:bg-tree-node-hover hover:text-primary"
+                  className="border-border hover:bg-accent hover:text-accent-foreground"
                 >
                   <Expand className="w-4 h-4 mr-1" />
                   <span className="hidden sm:inline">Expand</span>
@@ -207,7 +208,7 @@ const FrameworkMap = () => {
                   variant="outline"
                   size="sm"
                   onClick={collapseAll}
-                  className="border-tree-line hover:bg-tree-node-hover hover:text-primary"
+                  className="border-border hover:bg-accent hover:text-accent-foreground"
                 >
                   <Minimize2 className="w-4 h-4 mr-1" />
                   <span className="hidden sm:inline">Collapse</span>
@@ -216,9 +217,22 @@ const FrameworkMap = () => {
                   variant="outline"
                   size="sm"
                   onClick={reset}
-                  className="border-tree-line hover:bg-tree-node-hover hover:text-primary"
+                  className="border-border hover:bg-accent hover:text-accent-foreground"
                 >
                   <RotateCcw className="w-4 h-4" />
+                </Button>
+                
+                {/* Canvas View Link */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="border-border hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Link to="/canvas">
+                    <LayoutGrid className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Canvas</span>
+                  </Link>
                 </Button>
                 
                 {/* Save/Load buttons - only show when logged in */}
