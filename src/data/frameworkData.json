@@ -1,0 +1,190 @@
+{
+  "name": "Framework",
+  "children": [
+    {
+      "name": "Username",
+      "children": [
+        {
+          "name": "Username Search Engines",
+          "children": [
+            { "name": "Namechk", "url": "https://namechk.com" },
+            { "name": "KnowEm", "url": "https://knowem.com" },
+            { "name": "NameCheckup", "url": "https://namecheckup.com" }
+          ]
+        },
+        {
+          "name": "Specific Sites",
+          "children": [
+            { "name": "Twitter", "url": "https://twitter.com" },
+            { "name": "Facebook", "url": "https://facebook.com" },
+            { "name": "Instagram", "url": "https://instagram.com" },
+            { "name": "LinkedIn", "url": "https://linkedin.com" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Email Address",
+      "children": [
+        {
+          "name": "Email Search",
+          "children": [
+            { "name": "Hunter.io", "url": "https://hunter.io" },
+            { "name": "Emailrep.io", "url": "https://emailrep.io" }
+          ]
+        },
+        {
+          "name": "Email Verification",
+          "children": [
+            { "name": "Verify Email", "url": "https://verify-email.org" },
+            { "name": "Email Hippo", "url": "https://tools.emailhippo.com" }
+          ]
+        },
+        {
+          "name": "Breach Data",
+          "children": [
+            { "name": "Have I Been Pwned", "url": "https://haveibeenpwned.com" },
+            { "name": "DeHashed", "url": "https://dehashed.com" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Domain Name",
+      "children": [
+        {
+          "name": "Whois Records",
+          "children": [
+            { "name": "Whois.net", "url": "https://whois.net" },
+            { "name": "DomainTools", "url": "https://whois.domaintools.com" }
+          ]
+        },
+        {
+          "name": "DNS Records",
+          "children": [
+            { "name": "DNSDumpster", "url": "https://dnsdumpster.com" },
+            { "name": "SecurityTrails", "url": "https://securitytrails.com" }
+          ]
+        },
+        {
+          "name": "Subdomains",
+          "children": [
+            { "name": "Sublist3r", "url": "https://github.com/aboul3la/Sublist3r" },
+            { "name": "crt.sh", "url": "https://crt.sh" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "IP Address",
+      "children": [
+        {
+          "name": "Geolocation",
+          "children": [
+            { "name": "IP-API", "url": "https://ip-api.com" },
+            { "name": "IPInfo", "url": "https://ipinfo.io" }
+          ]
+        },
+        {
+          "name": "Reputation",
+          "children": [
+            { "name": "AbuseIPDB", "url": "https://abuseipdb.com" },
+            { "name": "VirusTotal", "url": "https://virustotal.com" }
+          ]
+        },
+        {
+          "name": "Port Scanning",
+          "children": [
+            { "name": "Shodan", "url": "https://shodan.io" },
+            { "name": "Censys", "url": "https://censys.io" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Social Media",
+      "children": [
+        {
+          "name": "Multi-Platform",
+          "children": [
+            { "name": "Social Searcher", "url": "https://social-searcher.com" },
+            { "name": "Buzzsumo", "url": "https://buzzsumo.com" }
+          ]
+        },
+        {
+          "name": "Twitter/X",
+          "children": [
+            { "name": "TweetDeck", "url": "https://tweetdeck.twitter.com" },
+            { "name": "Followerwonk", "url": "https://followerwonk.com" }
+          ]
+        },
+        {
+          "name": "Facebook",
+          "children": [
+            { "name": "Graph.tips", "url": "https://graph.tips" },
+            { "name": "StalkFace", "url": "https://stalkface.com" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Images",
+      "children": [
+        {
+          "name": "Reverse Image Search",
+          "children": [
+            { "name": "Google Images", "url": "https://images.google.com" },
+            { "name": "TinEye", "url": "https://tineye.com" },
+            { "name": "Yandex Images", "url": "https://yandex.com/images" }
+          ]
+        },
+        {
+          "name": "EXIF Data",
+          "children": [
+            { "name": "Jeffrey's EXIF Viewer", "url": "https://exif.regex.info/exif.cgi" },
+            { "name": "FotoForensics", "url": "https://fotoforensics.com" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "children": [
+        {
+          "name": "Search Engines",
+          "children": [
+            { "name": "Google Dorks", "url": "https://www.google.com/advanced_search" },
+            { "name": "Scribd", "url": "https://scribd.com" }
+          ]
+        },
+        {
+          "name": "Metadata",
+          "children": [
+            { "name": "FOCA", "url": "https://github.com/ElevenPaths/FOCA" },
+            { "name": "Metagoofil", "url": "https://github.com/laramies/metagoofil" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Geolocation",
+      "children": [
+        {
+          "name": "Maps",
+          "children": [
+            { "name": "Google Maps", "url": "https://maps.google.com" },
+            { "name": "Bing Maps", "url": "https://bing.com/maps" },
+            { "name": "OpenStreetMap", "url": "https://openstreetmap.org" }
+          ]
+        },
+        {
+          "name": "Street View",
+          "children": [
+            { "name": "Google Street View", "url": "https://google.com/streetview" },
+            { "name": "Mapillary", "url": "https://mapillary.com" }
+          ]
+        }
+      ]
+    }
+  ]
+}
