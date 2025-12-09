@@ -16,7 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 interface LoadMapDialogProps {
   maps: FrameworkMap[];
   loading: boolean;
-  onLoad: (data: FrameworkNode) => void;
+  onLoad: (data: FrameworkNode, map?: FrameworkMap) => void;
   onDelete: (id: string) => Promise<boolean>;
 }
 
@@ -25,7 +25,7 @@ const LoadMapDialog = ({ maps, loading, onLoad, onDelete }: LoadMapDialogProps) 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleLoad = (map: FrameworkMap) => {
-    onLoad(map.data);
+    onLoad(map.data, map);
     setOpen(false);
   };
 
