@@ -1,21 +1,46 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Network, Expand, Minimize2, RotateCcw } from "lucide-react";
+import { Network, Expand, Minimize2, RotateCcw, Save, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TreeNode from "./TreeNode";
 import SearchBar from "./SearchBar";
 import UserMenu from "./UserMenu";
 import SaveMapDialog from "./SaveMapDialog";
 import LoadMapDialog from "./LoadMapDialog";
-import defaultFrameworkData from "@/data/frameworkData.json";
 import { FrameworkNode } from "@/types/framework";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
+import { useFrameworkData } from "@/hooks/useFrameworkData";
+import { toast } from "sonner";
 
 const FrameworkMap = () => {
   const { user } = useAuth();
-  const { maps, loading: mapsLoading, saveMap, deleteMap } = useFrameworkMaps();
+  const { maps, loading: mapsLoading, saveMap, updateMap, deleteMap } = useFrameworkMaps();
   
-  const [frameworkData, setFrameworkData] = useState<FrameworkNode>(defaultFrameworkData as FrameworkNode);
+  const handleAutoSave = useCallback(async (data: FrameworkNode) => {
+    if (frameworkState.currentMapId) {
+      const success = await updateMap(frameworkState.currentMapId, { data });
+      if (success) {
+        toast.success("Auto-saved");
+      }
+    }
+  }, []);
+
+  const frameworkState = useFrameworkData({
+    onAutoSave: user ? handleAutoSave : undefined,
+    autoSaveDelay: 2000,
+  });
+
+  const {
+    data: frameworkData,
+    hasUnsavedChanges,
+    currentMapId,
+    updateNode,
+    addChild,
+    deleteNode,
+    loadData,
+    resetData,
+  } = frameworkState;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set([frameworkData.name]));
 
@@ -114,15 +139,25 @@ const FrameworkMap = () => {
 
   const reset = useCallback(() => {
     setSearchTerm("");
-    setFrameworkData(defaultFrameworkData as FrameworkNode);
-    setExpandedNodes(new Set([defaultFrameworkData.name]));
-  }, []);
+    resetData();
+    setExpandedNodes(new Set(["Framework Map"]));
+  }, [resetData]);
 
-  const handleLoadMap = useCallback((data: FrameworkNode) => {
-    setFrameworkData(data);
+  const handleLoadMap = useCallback((data: FrameworkNode, mapId?: string) => {
+    loadData(data, mapId);
     setSearchTerm("");
     setExpandedNodes(new Set([data.name]));
-  }, []);
+  }, [loadData]);
+
+  const handleManualSave = useCallback(async () => {
+    if (currentMapId) {
+      const success = await updateMap(currentMapId, { data: frameworkData });
+      if (success) {
+        frameworkState.setHasUnsavedChanges(false);
+        toast.success("Changes saved");
+      }
+    }
+  }, [currentMapId, updateMap, frameworkData, frameworkState]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -142,6 +177,13 @@ const FrameworkMap = () => {
               <h1 className="text-xl md:text-2xl font-bold text-primary text-glow tracking-tight">
                 Framework Map
               </h1>
+              {/* Unsaved changes indicator */}
+              {hasUnsavedChanges && user && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>Unsaved</span>
+                </div>
+              )}
             </div>
 
             {/* Search and controls */}
@@ -182,11 +224,22 @@ const FrameworkMap = () => {
                 {/* Save/Load buttons - only show when logged in */}
                 {user && (
                   <>
+                    {hasUnsavedChanges && currentMapId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManualSave}
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    )}
                     <SaveMapDialog data={frameworkData} onSave={saveMap} />
                     <LoadMapDialog 
                       maps={maps} 
                       loading={mapsLoading} 
-                      onLoad={handleLoadMap}
+                      onLoad={(data, map) => handleLoadMap(data, map?.id)}
                       onDelete={deleteMap}
                     />
                   </>
@@ -213,6 +266,11 @@ const FrameworkMap = () => {
                 <span className="text-foreground">{searchTerm}</span>"
               </span>
             )}
+            {user && (
+              <span className="ml-auto text-xs">
+                Double-click to edit • Right-click for options
+              </span>
+            )}
           </div>
 
           {/* Tree */}
@@ -227,6 +285,9 @@ const FrameworkMap = () => {
                 nodePath={frameworkData.name}
                 isLast={true}
                 matchedPaths={matchedPaths}
+                onUpdateNode={user ? updateNode : undefined}
+                onAddChild={user ? addChild : undefined}
+                onDeleteNode={user ? deleteNode : undefined}
               />
             </div>
           </div>
@@ -239,11 +300,11 @@ const FrameworkMap = () => {
           </p>
           {user ? (
             <p className="mt-1">
-              Use <span className="text-primary">Save</span> and <span className="text-primary">Load</span> to manage your framework maps
+              <span className="text-primary">Double-click</span> to edit • <span className="text-primary">Right-click</span> for more options
             </p>
           ) : (
             <p className="mt-1">
-              <span className="text-primary">Sign in</span> to save and load your custom framework maps
+              <span className="text-primary">Sign in</span> to edit and save your custom framework maps
             </p>
           )}
         </div>
