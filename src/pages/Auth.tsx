@@ -15,17 +15,15 @@ const authSchema = z.object({
 });
 
 const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, signIn } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate input
     const result = authSchema.safeParse({ email, password });
     if (!result.success) {
       const errors = result.error.errors.map(err => err.message).join(', ');
@@ -36,30 +34,16 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await signUp(email, password);
-        if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error('This email is already registered. Please sign in instead.');
-          } else {
-            toast.error(error.message);
-          }
+      const { error } = await signIn(email, password);
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password. Please try again.');
         } else {
-          toast.success('Account created successfully! You are now signed in.');
-          navigate('/');
+          toast.error(error.message);
         }
       } else {
-        const { error } = await signIn(email, password);
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            toast.error('Invalid email or password. Please try again.');
-          } else {
-            toast.error(error.message);
-          }
-        } else {
-          toast.success('Welcome back!');
-          navigate('/');
-        }
+        toast.success('Welcome back!');
+        navigate('/');
       }
     } catch (err) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -70,7 +54,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Scanline overlay effect */}
       <div className="fixed inset-0 scanline pointer-events-none z-50 opacity-30" />
 
       <Card className="w-full max-w-md bg-card/80 border-tree-line backdrop-blur">
@@ -85,7 +68,7 @@ const Auth = () => {
             Framework Map
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            {isSignUp ? 'Create an account to save your maps' : 'Sign in to access your saved maps'}
+            Sign in to access your saved maps
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -129,20 +112,11 @@ const Auth = () => {
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              Sign In
             </Button>
           </form>
-          
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-            </button>
-          </div>
 
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/')}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
