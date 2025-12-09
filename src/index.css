@@ -71,58 +71,58 @@
   }
 
   .dark {
-    --background: 0 0% 10.1961%;
-    --foreground: 0 0% 85.0980%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 85%;
 
-    --card: 0 0% 12.5490%;
-    --card-foreground: 0 0% 85.0980%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 85%;
 
-    --popover: 0 0% 12.5490%;
-    --popover-foreground: 0 0% 85.0980%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 85%;
 
-    --primary: 0 0% 62.7451%;
-    --primary-foreground: 0 0% 10.1961%;
+    --primary: 0 0% 60%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 0 0% 18.8235%;
-    --secondary-foreground: 0 0% 85.0980%;
+    --secondary: 0 0% 19%;
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 0 0% 16.4706%;
-    --muted-foreground: 0 0% 50.1961%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 0 0% 25.0980%;
-    --accent-foreground: 0 0% 85.0980%;
+    --accent: 0 0% 25%;
+    --accent-foreground: 0 0% 85%;
 
-    --destructive: 355.3846 60.0000% 12.7451%;
+    --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20.7843%;
-    --input: 0 0% 18.8235%;
-    --ring: 0 0% 62.7451%;
+    --border: 0 0% 22%;
+    --input: 0 0% 19%;
+    --ring: 0 0% 60%;
 
     /* Custom tokens for framework tree */
-    --tree-line: 0 0% 30%;
-    --tree-node: 0 0% 12.5490%;
-    --tree-node-hover: 0 0% 18%;
-    --tree-node-active: 0 0% 62.7451%;
+    --tree-line: 0 0% 35%;
+    --tree-node: 0 0% 14%;
+    --tree-node-hover: 0 0% 20%;
+    --tree-node-active: 0 0% 60%;
     --tree-glow: 0 0% 50%;
     --link-color: 0 0% 70%;
 
     /* Chart colors */
-    --chart-1: 0 0% 62.7451%;
-    --chart-2: 187.5000 13.7931% 11.3725%;
-    --chart-3: 0 0% 43.9216%;
-    --chart-4: 0 0% 34.5098%;
-    --chart-5: 0 0% 25.0980%;
+    --chart-1: 0 0% 60%;
+    --chart-2: 0 0% 45%;
+    --chart-3: 0 0% 40%;
+    --chart-4: 0 0% 35%;
+    --chart-5: 0 0% 25%;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 12.1569%;
-    --sidebar-foreground: 0 0% 85.0980%;
-    --sidebar-primary: 0 0% 62.7451%;
-    --sidebar-primary-foreground: 0 0% 10.1961%;
-    --sidebar-accent: 0 0% 25.0980%;
-    --sidebar-accent-foreground: 0 0% 85.0980%;
-    --sidebar-border: 0 0% 20.7843%;
-    --sidebar-ring: 0 0% 62.7451%;
+    --sidebar-background: 0 0% 12%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 0 0% 60%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 25%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 22%;
+    --sidebar-ring: 0 0% 60%;
 
     /* Typography */
     --font-sans: "Inter", sans-serif;
