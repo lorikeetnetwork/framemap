@@ -3,12 +3,26 @@ import { Network, Expand, Minimize2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TreeNode from "./TreeNode";
 import SearchBar from "./SearchBar";
-import frameworkData from "@/data/frameworkData.json";
+import UserMenu from "./UserMenu";
+import SaveMapDialog from "./SaveMapDialog";
+import LoadMapDialog from "./LoadMapDialog";
+import defaultFrameworkData from "@/data/frameworkData.json";
 import { FrameworkNode } from "@/types/framework";
+import { useAuth } from "@/hooks/useAuth";
+import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
 
 const FrameworkMap = () => {
+  const { user } = useAuth();
+  const { maps, loading: mapsLoading, saveMap, deleteMap } = useFrameworkMaps();
+  
+  const [frameworkData, setFrameworkData] = useState<FrameworkNode>(defaultFrameworkData as FrameworkNode);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set([frameworkData.name]));
+
+  // Reset expanded nodes when framework data changes
+  useEffect(() => {
+    setExpandedNodes(new Set([frameworkData.name]));
+  }, [frameworkData.name]);
 
   // Find all paths that match the search
   const findMatchingPaths = useCallback(
@@ -50,13 +64,13 @@ const FrameworkMap = () => {
     if (!searchTerm) {
       return { matchedPaths: new Set<string>(), pathsToExpand: new Set<string>(), matchCount: 0 };
     }
-    const matches = findMatchingPaths(frameworkData as FrameworkNode, "", searchTerm);
+    const matches = findMatchingPaths(frameworkData, "", searchTerm);
     return {
       matchedPaths: new Set(matches),
       pathsToExpand: getAncestorPaths(matches),
       matchCount: matches.length,
     };
-  }, [searchTerm, findMatchingPaths, getAncestorPaths]);
+  }, [searchTerm, findMatchingPaths, getAncestorPaths, frameworkData]);
 
   // Auto-expand matched paths when searching
   useEffect(() => {
@@ -90,17 +104,24 @@ const FrameworkMap = () => {
   }, []);
 
   const expandAll = useCallback(() => {
-    const allPaths = getAllNodePaths(frameworkData as FrameworkNode);
+    const allPaths = getAllNodePaths(frameworkData);
     setExpandedNodes(new Set(allPaths));
-  }, [getAllNodePaths]);
+  }, [getAllNodePaths, frameworkData]);
 
   const collapseAll = useCallback(() => {
     setExpandedNodes(new Set([frameworkData.name]));
-  }, []);
+  }, [frameworkData.name]);
 
   const reset = useCallback(() => {
     setSearchTerm("");
-    setExpandedNodes(new Set([frameworkData.name]));
+    setFrameworkData(defaultFrameworkData as FrameworkNode);
+    setExpandedNodes(new Set([defaultFrameworkData.name]));
+  }, []);
+
+  const handleLoadMap = useCallback((data: FrameworkNode) => {
+    setFrameworkData(data);
+    setSearchTerm("");
+    setExpandedNodes(new Set([data.name]));
   }, []);
 
   return (
@@ -130,7 +151,7 @@ const FrameworkMap = () => {
                 onChange={setSearchTerm}
                 resultCount={matchCount}
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 <Button
                   variant="outline"
                   size="sm"
@@ -157,6 +178,21 @@ const FrameworkMap = () => {
                 >
                   <RotateCcw className="w-4 h-4" />
                 </Button>
+                
+                {/* Save/Load buttons - only show when logged in */}
+                {user && (
+                  <>
+                    <SaveMapDialog data={frameworkData} onSave={saveMap} />
+                    <LoadMapDialog 
+                      maps={maps} 
+                      loading={mapsLoading} 
+                      onLoad={handleLoadMap}
+                      onDelete={deleteMap}
+                    />
+                  </>
+                )}
+                
+                <UserMenu />
               </div>
             </div>
           </div>
@@ -183,7 +219,7 @@ const FrameworkMap = () => {
           <div className="overflow-x-auto">
             <div className="min-w-max">
               <TreeNode
-                node={frameworkData as FrameworkNode}
+                node={frameworkData}
                 level={0}
                 searchTerm={searchTerm}
                 expandedNodes={expandedNodes}
@@ -201,9 +237,15 @@ const FrameworkMap = () => {
           <p>
             Click on folders to expand/collapse • Click on links to open in new tab
           </p>
-          <p className="mt-1">
-            Edit <code className="text-primary bg-secondary px-1 rounded">src/data/frameworkData.json</code> to customize
-          </p>
+          {user ? (
+            <p className="mt-1">
+              Use <span className="text-primary">Save</span> and <span className="text-primary">Load</span> to manage your framework maps
+            </p>
+          ) : (
+            <p className="mt-1">
+              <span className="text-primary">Sign in</span> to save and load your custom framework maps
+            </p>
+          )}
         </div>
       </main>
     </div>
