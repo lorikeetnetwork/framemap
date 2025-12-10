@@ -19,14 +19,14 @@ const resetSchema = z.object({
   email: z.string().email('Please enter a valid email'),
 });
 
-type AuthMode = 'signin' | 'reset';
+type AuthMode = 'signin' | 'signup' | 'reset';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<AuthMode>('signin');
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -52,6 +52,37 @@ const Auth = () => {
       } else {
         toast.success('Welcome back!');
         navigate('/');
+      }
+    } catch (err) {
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const result = authSchema.safeParse({ email, password });
+    if (!result.success) {
+      const errors = result.error.errors.map(err => err.message).join(', ');
+      toast.error(errors);
+      return;
+    }
+    
+    setLoading(true);
+
+    try {
+      const { error } = await signUp(email, password);
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please sign in instead.');
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success('Account created! You can now sign in.');
+        setMode('signin');
       }
     } catch (err) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -90,6 +121,17 @@ const Auth = () => {
     }
   };
 
+  const getDescription = () => {
+    switch (mode) {
+      case 'signin':
+        return 'Sign in to access your saved maps';
+      case 'signup':
+        return 'Create an account to save your maps';
+      case 'reset':
+        return 'Enter your email to reset your password';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="fixed inset-0 scanline pointer-events-none z-50 opacity-30" />
@@ -106,13 +148,11 @@ const Auth = () => {
             Framework Map
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            {mode === 'signin' 
-              ? 'Sign in to access your saved maps' 
-              : 'Enter your email to reset your password'}
+            {getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {mode === 'signin' ? (
+          {mode === 'signin' && (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground">Email</Label>
@@ -159,13 +199,80 @@ const Auth = () => {
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={loading}
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Sign In
               </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('signup')}
+                  className="text-primary hover:underline"
+                >
+                  Sign up
+                </button>
+              </p>
             </form>
-          ) : (
+          )}
+
+          {mode === 'signup' && (
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-email" className="text-foreground">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 bg-secondary border-tree-line focus:border-primary"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password" className="text-foreground">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 bg-secondary border-tree-line focus:border-primary"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 6 characters
+                </p>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={loading}
+              >
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Create Account
+              </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('signin')}
+                  className="text-primary hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            </form>
+          )}
+
+          {mode === 'reset' && (
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="reset-email" className="text-foreground">Email</Label>
@@ -187,9 +294,7 @@ const Auth = () => {
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={loading}
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
+                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Send Reset Email
               </Button>
               <button
