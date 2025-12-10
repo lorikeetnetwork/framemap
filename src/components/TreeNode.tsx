@@ -28,6 +28,8 @@ const TreeNode = ({
   onUpdateNode,
   onAddChild,
   onDeleteNode,
+  selectedNodePath,
+  onSelectNode,
 }: TreeNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -41,11 +43,24 @@ const TreeNode = ({
   const isNote = node.type === "note";
   const isFolder = node.type === "folder" || hasChildren;
   const isEditable = !!onUpdateNode;
+  const isSelected = selectedNodePath === nodePath;
 
   const nodeColor = node.color ? `hsl(${node.color})` : undefined;
 
-  const handleClick = () => {
+  const handleSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onSelectNode) {
+      onSelectNode(isSelected ? null : nodePath);
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
     if (isEditing) return;
+
+    // If in selection mode (onSelectNode provided), handle selection
+    if (onSelectNode) {
+      handleSelect(e);
+    }
 
     if (isLink && node.url) {
       window.open(node.url, "_blank", "noopener,noreferrer");
@@ -162,8 +177,9 @@ const TreeNode = ({
         className={cn(
           "group flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-all duration-200",
           "hover:bg-tree-node-hover",
-          isHighlighted && "bg-primary/20 ring-1 ring-primary/50",
-          isMatched && !isHighlighted && "bg-secondary/50",
+          isSelected && "bg-primary/20 ring-1 ring-primary",
+          isHighlighted && !isSelected && "bg-primary/20 ring-1 ring-primary/50",
+          isMatched && !isHighlighted && !isSelected && "bg-secondary/50",
           isTask && node.completed && "opacity-60"
         )}
         style={nodeColor ? { borderLeft: `3px solid ${nodeColor}` } : undefined}
@@ -279,6 +295,8 @@ const TreeNode = ({
               onUpdateNode={onUpdateNode}
               onAddChild={onAddChild}
               onDeleteNode={onDeleteNode}
+              selectedNodePath={selectedNodePath}
+              onSelectNode={onSelectNode}
             />
           ))}
         </div>

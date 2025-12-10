@@ -53,4 +53,6 @@ export interface TreeNodeProps {
   onDeleteNode?: (nodePath: string) => void;
   onMoveNode?: (sourcePath: string, targetPath: string, position: "before" | "after" | "inside") => void;
   isEditing?: boolean;
+  selectedNodePath?: string | null;
+  onSelectNode?: (nodePath: string | null) => void;
 }
