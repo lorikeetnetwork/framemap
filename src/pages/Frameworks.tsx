@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import UserMenu from "@/components/UserMenu";
 import CreateFrameworkDialog from "@/components/CreateFrameworkDialog";
 import ImportFrameworkDialog from "@/components/ImportFrameworkDialog";
+import TemplateBrowserDialog from "@/components/TemplateBrowserDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
 import { formatDistanceToNow } from "date-fns";
@@ -136,6 +137,7 @@ const Frameworks = () => {
             />
           </div>
           <div className="flex gap-2">
+            <TemplateBrowserDialog />
             <ImportFrameworkDialog />
             <CreateFrameworkDialog />
           </div>
