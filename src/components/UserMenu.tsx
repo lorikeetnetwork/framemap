@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,10 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, LogIn } from 'lucide-react';
+import { User, LogOut, LogIn, Shield } from 'lucide-react';
 
 const UserMenu = () => {
   const { user, signOut, loading } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   if (loading) {
@@ -55,6 +57,18 @@ const UserMenu = () => {
           {user.email}
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-tree-line" />
+        {isAdmin && (
+          <>
+            <DropdownMenuItem
+              onClick={() => navigate('/admin')}
+              className="cursor-pointer"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Panel
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-tree-line" />
+          </>
+        )}
         <DropdownMenuItem
           onClick={signOut}
           className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
