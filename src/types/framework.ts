@@ -1,5 +1,16 @@
 export type NodeType = "folder" | "link" | "note" | "task";
 
+export interface NodeStyle {
+  fontFamily?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
+  fontWeight?: "normal" | "medium" | "semibold" | "bold";
+  textColor?: string;
+  backgroundColor?: string;
+  icon?: string;
+  borderStyle?: "none" | "solid" | "dashed";
+  nodeShape?: "rectangle" | "rounded" | "pill";
+}
+
 export interface FrameworkNode {
   name: string;
   url?: string;
@@ -8,6 +19,7 @@ export interface FrameworkNode {
   description?: string;
   completed?: boolean;
   color?: string;
+  style?: NodeStyle;
 }
 
 export interface FrameworkSettings {
@@ -50,6 +62,7 @@ export interface TreeNodeProps {
   matchedPaths: Set<string>;
   onUpdateNode?: (nodePath: string, updates: Partial<FrameworkNode>) => void;
   onAddChild?: (nodePath: string, newNode: FrameworkNode) => void;
+  onAddSibling?: (nodePath: string, newNode: FrameworkNode) => void;
   onDeleteNode?: (nodePath: string) => void;
   onMoveNode?: (sourcePath: string, targetPath: string, position: "before" | "after" | "inside") => void;
   isEditing?: boolean;

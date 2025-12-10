@@ -233,6 +233,7 @@ export const useFrameworkDataWithHistory = ({
     loadData,
     resetData,
     setHasUnsavedChanges,
+    findNodeByPath: (path: string) => findNodeByPath(data, path),
     // Undo/Redo
     undo: handleUndo,
     redo: handleRedo,
