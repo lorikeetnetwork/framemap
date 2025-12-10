@@ -16,29 +16,41 @@ export type Database = {
     Tables: {
       framework_maps: {
         Row: {
+          canvas_positions: Json | null
           created_at: string
           data: Json
           description: string | null
           id: string
+          is_template: boolean | null
           name: string
+          settings: Json | null
+          template_category: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          canvas_positions?: Json | null
           created_at?: string
           data: Json
           description?: string | null
           id?: string
+          is_template?: boolean | null
           name: string
+          settings?: Json | null
+          template_category?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          canvas_positions?: Json | null
           created_at?: string
           data?: Json
           description?: string | null
           id?: string
+          is_template?: boolean | null
           name?: string
+          settings?: Json | null
+          template_category?: string | null
           updated_at?: string
           user_id?: string
         }
