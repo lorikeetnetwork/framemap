@@ -1,15 +1,22 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useFrameworkData } from "@/hooks/useFrameworkData";
 import { useCanvasState } from "@/hooks/useCanvasState";
 import CanvasNodeComponent from "./CanvasNode";
 import CanvasConnections from "./CanvasConnections";
 import CanvasControls from "./CanvasControls";
+import { FrameworkNode } from "@/types/framework";
 
-const FrameworkCanvas = () => {
+interface FrameworkCanvasProps {
+  data?: FrameworkNode;
+}
+
+const FrameworkCanvas = ({ data }: FrameworkCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  const { data: frameworkData } = useFrameworkData({});
+  const { data: defaultData } = useFrameworkData({});
+  const frameworkData = data || defaultData;
+  
   const {
     nodes,
     connections,

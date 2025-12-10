@@ -10,6 +10,35 @@ export interface FrameworkNode {
   color?: string;
 }
 
+export interface FrameworkSettings {
+  defaultNodeColor?: string;
+  connectionLineStyle?: 'curved' | 'straight' | 'orthogonal';
+  gridVisible?: boolean;
+  autoSave?: boolean;
+}
+
+export interface CanvasPosition {
+  x: number;
+  y: number;
+}
+
+export interface CanvasPositions {
+  [nodePath: string]: CanvasPosition;
+}
+
+export interface FrameworkMapData {
+  id: string;
+  name: string;
+  description: string | null;
+  data: FrameworkNode;
+  settings: FrameworkSettings;
+  canvas_positions: CanvasPositions | null;
+  is_template: boolean;
+  template_category: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TreeNodeProps {
   node: FrameworkNode;
   level: number;
