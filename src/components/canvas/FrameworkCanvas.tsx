@@ -1,21 +1,25 @@
-import { useRef, useState, useCallback } from "react";
-import { useFrameworkData } from "@/hooks/useFrameworkData";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useCanvasState } from "@/hooks/useCanvasState";
 import CanvasNodeComponent from "./CanvasNode";
 import CanvasConnections from "./CanvasConnections";
 import CanvasControls from "./CanvasControls";
-import { FrameworkNode } from "@/types/framework";
+import { FrameworkNode, CanvasPositions } from "@/types/framework";
 
 interface FrameworkCanvasProps {
-  data?: FrameworkNode;
+  data: FrameworkNode;
+  canvasPositions?: CanvasPositions | null;
+  onNodeUpdate?: (nodePath: string, updates: Partial<FrameworkNode>) => void;
+  onPositionsChange?: (positions: CanvasPositions) => void;
 }
 
-const FrameworkCanvas = ({ data }: FrameworkCanvasProps) => {
+const FrameworkCanvas = ({ 
+  data, 
+  canvasPositions, 
+  onNodeUpdate,
+  onPositionsChange 
+}: FrameworkCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  
-  const { data: defaultData } = useFrameworkData({});
-  const frameworkData = data || defaultData;
   
   const {
     nodes,
@@ -26,18 +30,30 @@ const FrameworkCanvas = ({ data }: FrameworkCanvasProps) => {
     selectedNode,
     setSelectedNode,
     updateNodePosition,
+    updateNodeData,
     zoomIn,
     zoomOut,
     resetView,
     reLayout,
     setZoom,
-  } = useCanvasState(frameworkData);
+    getPositions,
+  } = useCanvasState(data, { 
+    onNodeUpdate, 
+    savedPositions: canvasPositions 
+  });
 
   const [isDragging, setIsDragging] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Notify parent of position changes when dragging ends
+  useEffect(() => {
+    if (!isDragging && dragNodeId === null && onPositionsChange) {
+      onPositionsChange(getPositions());
+    }
+  }, [isDragging, dragNodeId]);
 
   // Handle node drag start
   const handleNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {
@@ -110,7 +126,7 @@ const FrameworkCanvas = ({ data }: FrameworkCanvasProps) => {
   const canvasHeight = canvasBounds.maxY + 200;
 
   return (
-    <div className="h-screen w-screen bg-background overflow-hidden relative">
+    <div className="h-full w-full bg-background overflow-hidden relative">
       <CanvasControls
         zoom={zoom}
         onZoomIn={zoomIn}
@@ -118,8 +134,6 @@ const FrameworkCanvas = ({ data }: FrameworkCanvasProps) => {
         onResetView={resetView}
         onReLayout={reLayout}
       />
-
-      {/* Mini-map could go here */}
 
       <div
         ref={containerRef}

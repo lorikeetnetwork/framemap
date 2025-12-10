@@ -1,61 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { FrameworkNode } from "@/types/framework";
 import { CanvasNode, CanvasConnection } from "@/types/canvas";
-
-// Convert hierarchical data to flat canvas nodes with positions
-function flattenToCanvasNodes(
-  node: FrameworkNode,
-  parentId: string | undefined = undefined,
-  startX: number = 100,
-  startY: number = 100,
-  level: number = 0,
-  index: number = 0,
-  siblingCount: number = 1
-): { nodes: CanvasNode[]; connections: CanvasConnection[] } {
-  const nodeId = parentId ? `${parentId}/${node.name}` : node.name;
-  const horizontalSpacing = 320;
-  const verticalSpacing = 140;
-  
-  const x = startX + level * horizontalSpacing;
-  const y = startY + index * verticalSpacing;
-  
-  const canvasNode: CanvasNode = {
-    id: nodeId,
-    node,
-    x,
-    y,
-    width: 240,
-    height: 80,
-    parentId,
-  };
-
-  const nodes: CanvasNode[] = [canvasNode];
-  const connections: CanvasConnection[] = [];
-
-  if (parentId) {
-    connections.push({ from: parentId, to: nodeId });
-  }
-
-  if (node.children) {
-    let childY = y;
-    node.children.forEach((child, idx) => {
-      const result = flattenToCanvasNodes(
-        child,
-        nodeId,
-        startX,
-        childY,
-        level + 1,
-        0,
-        node.children!.length
-      );
-      nodes.push(...result.nodes);
-      connections.push(...result.connections);
-      childY += result.nodes.filter(n => n.id.startsWith(nodeId + "/")).length * verticalSpacing + verticalSpacing;
-    });
-  }
-
-  return { nodes, connections };
-}
 
 // Auto-layout nodes in a tree structure
 function autoLayout(frameworkData: FrameworkNode): { nodes: CanvasNode[]; connections: CanvasConnection[] } {
@@ -79,7 +24,6 @@ function autoLayout(frameworkData: FrameworkNode): { nodes: CanvasNode[]; connec
     
     // First pass: calculate positions for all children
     if (node.children && node.children.length > 0) {
-      const startY = yOffset.value;
       node.children.forEach((child) => {
         childYPositions.push(yOffset.value);
         const childHeight = processNode(child, nodeId, level + 1, yOffset);
@@ -144,20 +88,76 @@ function autoLayout(frameworkData: FrameworkNode): { nodes: CanvasNode[]; connec
   return { nodes, connections: uniqueConnections };
 }
 
-export function useCanvasState(frameworkData: FrameworkNode) {
-  const initialLayout = useMemo(() => autoLayout(frameworkData), [frameworkData]);
+interface UseCanvasStateOptions {
+  onNodeUpdate?: (nodePath: string, updates: Partial<FrameworkNode>) => void;
+  savedPositions?: Record<string, { x: number; y: number }> | null;
+}
+
+export function useCanvasState(
+  frameworkData: FrameworkNode, 
+  options: UseCanvasStateOptions = {}
+) {
+  const { onNodeUpdate, savedPositions } = options;
+  
+  const initialLayout = useMemo(() => {
+    const layout = autoLayout(frameworkData);
+    // Apply saved positions if available
+    if (savedPositions) {
+      layout.nodes = layout.nodes.map(node => {
+        const saved = savedPositions[node.id];
+        if (saved) {
+          return { ...node, x: saved.x, y: saved.y };
+        }
+        return node;
+      });
+    }
+    return layout;
+  }, [frameworkData, savedPositions]);
   
   const [nodes, setNodes] = useState<CanvasNode[]>(initialLayout.nodes);
-  const [connections] = useState<CanvasConnection[]>(initialLayout.connections);
+  const [connections, setConnections] = useState<CanvasConnection[]>(initialLayout.connections);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  // Sync nodes when framework data changes (bidirectional sync)
+  useEffect(() => {
+    const newLayout = autoLayout(frameworkData);
+    
+    // Preserve positions for existing nodes
+    const updatedNodes = newLayout.nodes.map(newNode => {
+      const existingNode = nodes.find(n => n.id === newNode.id);
+      if (existingNode) {
+        return { ...newNode, x: existingNode.x, y: existingNode.y };
+      }
+      // Check saved positions for new nodes
+      const saved = savedPositions?.[newNode.id];
+      if (saved) {
+        return { ...newNode, x: saved.x, y: saved.y };
+      }
+      return newNode;
+    });
+    
+    setNodes(updatedNodes);
+    setConnections(newLayout.connections);
+  }, [frameworkData, savedPositions]);
 
   const updateNodePosition = useCallback((nodeId: string, x: number, y: number) => {
     setNodes((prev) =>
       prev.map((n) => (n.id === nodeId ? { ...n, x, y } : n))
     );
   }, []);
+
+  // Update node data (bidirectional sync to tree)
+  const updateNodeData = useCallback((nodeId: string, updates: Partial<FrameworkNode>) => {
+    if (onNodeUpdate) {
+      onNodeUpdate(nodeId, updates);
+    }
+    // Local update for immediate feedback
+    setNodes((prev) =>
+      prev.map((n) => (n.id === nodeId ? { ...n, node: { ...n.node, ...updates } } : n))
+    );
+  }, [onNodeUpdate]);
 
   const zoomIn = useCallback(() => {
     setZoom((prev) => Math.min(prev + 0.1, 2));
@@ -175,7 +175,16 @@ export function useCanvasState(frameworkData: FrameworkNode) {
   const reLayout = useCallback(() => {
     const newLayout = autoLayout(frameworkData);
     setNodes(newLayout.nodes);
+    setConnections(newLayout.connections);
   }, [frameworkData]);
+
+  // Get current positions for saving
+  const getPositions = useCallback(() => {
+    return nodes.reduce((acc, node) => {
+      acc[node.id] = { x: node.x, y: node.y };
+      return acc;
+    }, {} as Record<string, { x: number; y: number }>);
+  }, [nodes]);
 
   return {
     nodes,
@@ -186,10 +195,12 @@ export function useCanvasState(frameworkData: FrameworkNode) {
     selectedNode,
     setSelectedNode,
     updateNodePosition,
+    updateNodeData,
     zoomIn,
     zoomOut,
     resetView,
     reLayout,
     setZoom,
+    getPositions,
   };
 }

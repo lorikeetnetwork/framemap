@@ -10,6 +10,7 @@ export interface FrameworkMap {
   name: string;
   description: string | null;
   data: FrameworkNode;
+  canvas_positions: Record<string, { x: number; y: number }> | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,7 +38,8 @@ export const useFrameworkMaps = () => {
       // Cast the data properly
       const typedMaps = (data || []).map(item => ({
         ...item,
-        data: item.data as unknown as FrameworkNode
+        data: item.data as unknown as FrameworkNode,
+        canvas_positions: item.canvas_positions as Record<string, { x: number; y: number }> | null
       }));
       
       setMaps(typedMaps);
@@ -75,7 +77,8 @@ export const useFrameworkMaps = () => {
 
       const typedMap = {
         ...savedMap,
-        data: savedMap.data as unknown as FrameworkNode
+        data: savedMap.data as unknown as FrameworkNode,
+        canvas_positions: savedMap.canvas_positions as Record<string, { x: number; y: number }> | null
       };
 
       setMaps(prev => [typedMap, ...prev]);
@@ -88,16 +91,17 @@ export const useFrameworkMaps = () => {
     }
   };
 
-  const updateMap = async (id: string, updates: { name?: string; data?: FrameworkNode; description?: string }): Promise<boolean> => {
+  const updateMap = async (id: string, updates: { name?: string; data?: FrameworkNode; description?: string; canvas_positions?: Record<string, { x: number; y: number }> | null }): Promise<boolean> => {
     if (!user) {
       toast.error('Please sign in to update maps');
       return false;
     }
 
     try {
-      const updatePayload: { name?: string; description?: string; data?: Json } = {};
+      const updatePayload: { name?: string; description?: string; data?: Json; canvas_positions?: Json } = {};
       if (updates.name) updatePayload.name = updates.name;
       if (updates.description !== undefined) updatePayload.description = updates.description;
+      if (updates.canvas_positions !== undefined) updatePayload.canvas_positions = updates.canvas_positions as unknown as Json;
       if (updates.data) updatePayload.data = updates.data as unknown as Json;
 
       const { error } = await supabase

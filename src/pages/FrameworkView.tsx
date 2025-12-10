@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   Network, 
@@ -9,13 +9,15 @@ import {
   LayoutGrid,
   Loader2,
   Undo2,
-  Redo2
+  Redo2,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TreeNode from "@/components/TreeNode";
 import SearchBar from "@/components/SearchBar";
 import DashboardLayout from "@/components/DashboardLayout";
-import { FrameworkNode } from "@/types/framework";
+import NodeStylePanel from "@/components/NodeStylePanel";
+import { FrameworkNode, NodeStyle } from "@/types/framework";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
 import { useFrameworkDataWithHistory } from "@/hooks/useFrameworkDataWithHistory";
@@ -27,6 +29,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const FrameworkView = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +41,8 @@ const FrameworkView = () => {
   const { user, loading: authLoading } = useAuth();
   const { maps, loading: mapsLoading, updateMap } = useFrameworkMaps();
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showStylePanel, setShowStylePanel] = useState(false);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
   
   // Find the current map
   const currentMap = useMemo(() => maps.find(m => m.id === id), [maps, id]);
@@ -57,18 +66,22 @@ const FrameworkView = () => {
     hasUnsavedChanges,
     updateNode,
     addChild,
+    addSibling,
     deleteNode,
     loadData,
     selectedNodePath,
+    selectedNode,
     setSelectedNodePath,
     undo,
     redo,
     canUndo,
     canRedo,
+    findNodeByPath,
   } = frameworkState;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set([frameworkData.name]));
+  const [editingNodePath, setEditingNodePath] = useState<string | null>(null);
 
   // Load map data when available
   useEffect(() => {
@@ -77,7 +90,6 @@ const FrameworkView = () => {
       setExpandedNodes(new Set([currentMap.data.name]));
       setInitialLoading(false);
     } else if (!mapsLoading && !currentMap && !authLoading && user) {
-      // Map not found
       toast.error("Framework not found");
       navigate("/frameworks");
     } else if (!mapsLoading && !authLoading) {
@@ -152,6 +164,18 @@ const FrameworkView = () => {
     });
   }, []);
 
+  // Get all node paths as flat list for navigation
+  const getAllNodePathsFlat = useCallback((node: FrameworkNode, path: string = ""): string[] => {
+    const currentPath = path ? `${path}/${node.name}` : node.name;
+    const paths = [currentPath];
+    if (node.children && expandedNodes.has(currentPath)) {
+      node.children.forEach((child) => {
+        paths.push(...getAllNodePathsFlat(child, currentPath));
+      });
+    }
+    return paths;
+  }, [expandedNodes]);
+
   // Get all node paths for expand all
   const getAllNodePaths = useCallback((node: FrameworkNode, path: string = ""): string[] => {
     const currentPath = path ? `${path}/${node.name}` : node.name;
@@ -183,9 +207,58 @@ const FrameworkView = () => {
     }
   }, [id, updateMap, frameworkData, frameworkState]);
 
+  // Navigate to sibling/child in tree
+  const navigateTree = useCallback((direction: "up" | "down" | "left" | "right") => {
+    if (!selectedNodePath) {
+      setSelectedNodePath(frameworkData.name);
+      return;
+    }
+
+    const visiblePaths = getAllNodePathsFlat(frameworkData);
+    const currentIndex = visiblePaths.indexOf(selectedNodePath);
+
+    if (direction === "up" && currentIndex > 0) {
+      setSelectedNodePath(visiblePaths[currentIndex - 1]);
+    } else if (direction === "down" && currentIndex < visiblePaths.length - 1) {
+      setSelectedNodePath(visiblePaths[currentIndex + 1]);
+    } else if (direction === "left") {
+      // Collapse current node or go to parent
+      if (expandedNodes.has(selectedNodePath)) {
+        toggleNode(selectedNodePath);
+      } else {
+        const parentPath = selectedNodePath.split("/").slice(0, -1).join("/");
+        if (parentPath) setSelectedNodePath(parentPath);
+      }
+    } else if (direction === "right") {
+      // Expand current node or go to first child
+      const result = findNodeByPath(selectedNodePath);
+      if (result?.node.children?.length) {
+        if (!expandedNodes.has(selectedNodePath)) {
+          toggleNode(selectedNodePath);
+        } else {
+          setSelectedNodePath(`${selectedNodePath}/${result.node.children[0].name}`);
+        }
+      }
+    }
+  }, [selectedNodePath, frameworkData, getAllNodePathsFlat, expandedNodes, toggleNode, setSelectedNodePath, findNodeByPath]);
+
+  // Handle style update for selected node
+  const handleStyleUpdate = useCallback((style: Partial<NodeStyle>) => {
+    if (selectedNodePath && selectedNode) {
+      const newStyle = { ...(selectedNode.style || {}), ...style };
+      // Remove undefined values
+      Object.keys(newStyle).forEach(key => {
+        if (newStyle[key as keyof NodeStyle] === undefined) {
+          delete newStyle[key as keyof NodeStyle];
+        }
+      });
+      updateNode(selectedNodePath, { style: Object.keys(newStyle).length > 0 ? newStyle : undefined });
+    }
+  }, [selectedNodePath, selectedNode, updateNode]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
-    enabled: !initialLoading,
+    enabled: !initialLoading && !editingNodePath,
     shortcuts: [
       {
         key: "z",
@@ -236,6 +309,7 @@ const FrameworkView = () => {
         action: () => {
           setSelectedNodePath(null);
           setSearchTerm("");
+          setEditingNodePath(null);
         },
         description: "Clear selection",
       },
@@ -248,6 +322,65 @@ const FrameworkView = () => {
           }
         },
         description: "Delete selected node",
+      },
+      // Arrow key navigation
+      {
+        key: "ArrowUp",
+        action: () => navigateTree("up"),
+        description: "Navigate up",
+      },
+      {
+        key: "ArrowDown",
+        action: () => navigateTree("down"),
+        description: "Navigate down",
+      },
+      {
+        key: "ArrowLeft",
+        action: () => navigateTree("left"),
+        description: "Collapse or go to parent",
+      },
+      {
+        key: "ArrowRight",
+        action: () => navigateTree("right"),
+        description: "Expand or go to first child",
+      },
+      // Add child with Tab
+      {
+        key: "Tab",
+        action: () => {
+          if (selectedNodePath) {
+            const newNode: FrameworkNode = { name: "New Node", type: "folder" };
+            addChild(selectedNodePath, newNode);
+            if (!expandedNodes.has(selectedNodePath)) {
+              toggleNode(selectedNodePath);
+            }
+            toast.info("Added child node");
+          }
+        },
+        description: "Add child node",
+      },
+      // Add sibling with Shift+Tab
+      {
+        key: "Tab",
+        shift: true,
+        action: () => {
+          if (selectedNodePath && selectedNodePath !== frameworkData.name) {
+            const newNode: FrameworkNode = { name: "New Node", type: "folder" };
+            addSibling(selectedNodePath, newNode);
+            toast.info("Added sibling node");
+          }
+        },
+        description: "Add sibling node",
+      },
+      // Edit with Enter
+      {
+        key: "Enter",
+        action: () => {
+          if (selectedNodePath) {
+            setEditingNodePath(selectedNodePath);
+          }
+        },
+        description: "Edit selected node",
       },
     ],
   });
@@ -362,6 +495,34 @@ const FrameworkView = () => {
                   <TooltipContent>Collapse all nodes</TooltipContent>
                 </Tooltip>
 
+                {/* Style Panel Toggle */}
+                <Sheet open={showStylePanel} onOpenChange={setShowStylePanel}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SheetTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={!selectedNodePath}
+                        >
+                          <Palette className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">Style</span>
+                        </Button>
+                      </SheetTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Style selected node</TooltipContent>
+                  </Tooltip>
+                  <SheetContent side="right" className="w-80 p-0">
+                    {selectedNode && (
+                      <NodeStylePanel
+                        node={selectedNode}
+                        onUpdateStyle={handleStyleUpdate}
+                        onClose={() => setShowStylePanel(false)}
+                      />
+                    )}
+                  </SheetContent>
+                </Sheet>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="sm" asChild>
@@ -410,12 +571,12 @@ const FrameworkView = () => {
                 </span>
               )}
               <span className="ml-auto text-xs">
-                Ctrl+Z undo • Ctrl+Y redo • Del delete • Double-click to edit
+                ↑↓←→ navigate • Tab add child • Enter edit • Del delete
               </span>
             </div>
 
             {/* Tree */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" ref={treeContainerRef}>
               <div className="min-w-max">
                 <TreeNode
                   node={frameworkData}
@@ -428,9 +589,11 @@ const FrameworkView = () => {
                   matchedPaths={matchedPaths}
                   onUpdateNode={updateNode}
                   onAddChild={addChild}
+                  onAddSibling={addSibling}
                   onDeleteNode={deleteNode}
                   selectedNodePath={selectedNodePath}
                   onSelectNode={setSelectedNodePath}
+                  isEditing={editingNodePath === frameworkData.name}
                 />
               </div>
             </div>
