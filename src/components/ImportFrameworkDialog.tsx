@@ -23,15 +23,31 @@ interface ImportedData {
   data?: FrameworkNode;
 }
 
-const ImportFrameworkDialog = () => {
+interface ImportFrameworkDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+const ImportFrameworkDialog = ({ open: controlledOpen, onOpenChange, trigger }: ImportFrameworkDialogProps) => {
   const navigate = useNavigate();
   const { saveMap } = useFrameworkMaps();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [importedData, setImportedData] = useState<FrameworkNode | null>(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpenState = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
 
   const validateFrameworkNode = (data: unknown): data is FrameworkNode => {
     if (!data || typeof data !== 'object') return false;
@@ -102,7 +118,7 @@ const ImportFrameworkDialog = () => {
     setLoading(false);
 
     if (result) {
-      setOpen(false);
+      setOpenState(false);
       resetState();
       navigate(`/frameworks/${result.id}`);
     }
@@ -118,7 +134,7 @@ const ImportFrameworkDialog = () => {
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    setOpenState(newOpen);
     if (!newOpen) {
       resetState();
     }
@@ -126,12 +142,16 @@ const ImportFrameworkDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload className="w-4 h-4 mr-2" />
-          Import
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Import Framework</DialogTitle>

@@ -48,13 +48,29 @@ const defaultFrameworkData: FrameworkNode = {
   ],
 };
 
-const CreateFrameworkDialog = () => {
+interface CreateFrameworkDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+const CreateFrameworkDialog = ({ open: controlledOpen, onOpenChange, trigger }: CreateFrameworkDialogProps) => {
   const navigate = useNavigate();
   const { saveMap } = useFrameworkMaps();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -81,12 +97,16 @@ const CreateFrameworkDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          New Framework
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Framework
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Framework</DialogTitle>

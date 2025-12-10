@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
-  Plus, 
   Network, 
   LayoutGrid, 
   Trash2, 
   MoreVertical, 
   Search,
-  FileJson,
   Download,
   Clock,
   FolderOpen
@@ -33,17 +31,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import UserMenu from "@/components/UserMenu";
-import CreateFrameworkDialog from "@/components/CreateFrameworkDialog";
-import ImportFrameworkDialog from "@/components/ImportFrameworkDialog";
-import TemplateBrowserDialog from "@/components/TemplateBrowserDialog";
-import { useAuth } from "@/hooks/useAuth";
+import DashboardLayout from "@/components/DashboardLayout";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 const Frameworks = () => {
-  const { user, loading: authLoading } = useAuth();
   const { maps, loading, deleteMap } = useFrameworkMaps();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,49 +78,20 @@ const Frameworks = () => {
     toast.success('Framework exported successfully');
   };
 
-  // Redirect to auth if not logged in
-  if (!authLoading && !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <Network className="w-12 h-12 text-primary mx-auto mb-4" />
-            <CardTitle>Sign in Required</CardTitle>
-            <CardDescription>
-              Please sign in to view and manage your frameworks
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button asChild>
-              <Link to="/auth">Sign In</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                <Network className="w-8 h-8 text-primary" />
-                <h1 className="text-xl font-bold text-foreground">My Frameworks</h1>
-              </Link>
-            </div>
-            <UserMenu />
-          </div>
+    <DashboardLayout>
+      <div className="p-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground">My Frameworks</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and organize your framework projects
+          </p>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search frameworks..."
@@ -135,11 +99,6 @@ const Frameworks = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
-          </div>
-          <div className="flex gap-2">
-            <TemplateBrowserDialog />
-            <ImportFrameworkDialog />
-            <CreateFrameworkDialog />
           </div>
         </div>
 
@@ -168,9 +127,8 @@ const Frameworks = () => {
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               {searchTerm 
                 ? 'Try a different search term' 
-                : 'Create your first framework to start organizing your ideas and projects'}
+                : 'Create your first framework using the sidebar actions'}
             </p>
-            {!searchTerm && <CreateFrameworkDialog />}
           </div>
         ) : (
           /* Framework grid */
@@ -279,7 +237,7 @@ const Frameworks = () => {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => !isDeleting && setDeleteId(null)}>
@@ -302,7 +260,7 @@ const Frameworks = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DashboardLayout>
   );
 };
 

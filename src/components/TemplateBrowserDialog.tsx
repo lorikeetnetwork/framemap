@@ -36,15 +36,27 @@ import {
 
 interface TemplateBrowserDialogProps {
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const TemplateBrowserDialog = ({ trigger }: TemplateBrowserDialogProps) => {
+const TemplateBrowserDialog = ({ trigger, open: controlledOpen, onOpenChange }: TemplateBrowserDialogProps) => {
   const navigate = useNavigate();
   const { saveMap } = useFrameworkMaps();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<StrategyTemplate | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
 
   const groupedTemplates = getTemplatesByCategory();
 
@@ -100,14 +112,16 @@ const TemplateBrowserDialog = ({ trigger }: TemplateBrowserDialogProps) => {
         setSearchTerm("");
       }
     }}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline">
-            <FileText className="w-4 h-4 mr-2" />
-            Browse Templates
-          </Button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline">
+              <FileText className="w-4 h-4 mr-2" />
+              Browse Templates
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle>Strategy Framework Templates</DialogTitle>
