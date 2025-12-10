@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Network, ArrowLeft, Loader2, TreeDeciduous } from "lucide-react";
+import { Network, Loader2, TreeDeciduous } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import UserMenu from "@/components/UserMenu";
 import FrameworkCanvas from "@/components/canvas/FrameworkCanvas";
+import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
 import { toast } from "sonner";
@@ -46,17 +46,12 @@ const FrameworkCanvasView = () => {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="flex-shrink-0 bg-background/95 backdrop-blur border-b border-border z-10">
-        <div className="px-4 py-3">
+    <DashboardLayout showDialogs={false}>
+      <div className="h-screen flex flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex-shrink-0 bg-background border-b border-border z-10 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/frameworks">
-                  <ArrowLeft className="w-4 h-4" />
-                </Link>
-              </Button>
               <Network className="w-6 h-6 text-primary" />
               <div>
                 <h1 className="text-lg font-bold text-foreground">
@@ -67,27 +62,22 @@ const FrameworkCanvasView = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
+              <Button variant="outline" size="sm" asChild>
                 <Link to={`/frameworks/${id}`}>
                   <TreeDeciduous className="w-4 h-4 mr-1" />
                   Tree View
                 </Link>
               </Button>
-              <UserMenu />
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Canvas */}
-      <div className="flex-1 overflow-hidden">
-        <FrameworkCanvas data={currentMap.data} />
+        {/* Canvas */}
+        <div className="flex-1 overflow-hidden">
+          <FrameworkCanvas data={currentMap.data} />
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

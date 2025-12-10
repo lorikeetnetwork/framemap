@@ -19,6 +19,8 @@ import {
   Logout,
   Home,
   DataVis_1,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
 } from "@carbon/icons-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -146,9 +148,13 @@ function IconNavButton({
 function IconNavigation({
   activeSection,
   onSectionChange,
+  isCollapsed,
+  onToggleCollapse,
 }: {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }) {
   const { isAdmin } = useIsAdmin();
   const { signOut } = useAuth();
@@ -168,7 +174,12 @@ function IconNavigation({
   };
 
   return (
-    <aside className="bg-card flex flex-col gap-2 items-center p-4 w-16 min-h-screen border-r border-border">
+    <aside 
+      className={`bg-card flex flex-col gap-2 items-center py-4 min-h-screen border-r border-border transition-all duration-300 ${
+        isCollapsed ? "w-0 p-0 overflow-hidden opacity-0" : "w-16 px-4"
+      }`}
+      style={{ transitionTimingFunction: softSpringEasing }}
+    >
       {/* Logo */}
       <div className="mb-2 size-10 flex items-center justify-center">
         <LogoIcon />
@@ -424,12 +435,16 @@ function DetailSidebar({
   activeSection, 
   onCreateNew, 
   onImport, 
-  onBrowseTemplates 
+  onBrowseTemplates,
+  iconNavCollapsed,
+  onToggleIconNav,
 }: { 
   activeSection: string;
   onCreateNew?: () => void;
   onImport?: () => void;
   onBrowseTemplates?: () => void;
+  iconNavCollapsed?: boolean;
+  onToggleIconNav?: () => void;
 }) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -546,6 +561,29 @@ function DetailSidebar({
       }`}
       style={{ transitionTimingFunction: softSpringEasing }}
     >
+      {/* Toggle Icon Nav Button */}
+      {iconNavCollapsed && !isCollapsed && (
+        <button
+          type="button"
+          onClick={onToggleIconNav}
+          className="flex items-center justify-center size-8 mb-2 transition-colors hover:bg-accent text-muted-foreground hover:text-foreground"
+          title="Show icon navigation"
+        >
+          <ChevronRightIcon size={16} />
+        </button>
+      )}
+      
+      {!iconNavCollapsed && !isCollapsed && (
+        <button
+          type="button"
+          onClick={onToggleIconNav}
+          className="flex items-center justify-center size-8 mb-2 transition-colors hover:bg-accent text-muted-foreground hover:text-foreground"
+          title="Hide icon navigation"
+        >
+          <ChevronLeft size={16} />
+        </button>
+      )}
+
       {!isCollapsed && (
         <div className="relative shrink-0 w-full">
           <div className="flex items-center p-1 w-full">
@@ -619,15 +657,23 @@ export function DashboardSidebar({
   };
 
   const [activeSection, setActiveSection] = useState(getActiveSection());
+  const [iconNavCollapsed, setIconNavCollapsed] = useState(false);
 
   return (
     <div className="bg-background min-h-screen flex w-full">
-      <IconNavigation activeSection={activeSection} onSectionChange={setActiveSection} />
+      <IconNavigation 
+        activeSection={activeSection} 
+        onSectionChange={setActiveSection}
+        isCollapsed={iconNavCollapsed}
+        onToggleCollapse={() => setIconNavCollapsed(prev => !prev)}
+      />
       <DetailSidebar 
         activeSection={activeSection} 
         onCreateNew={onCreateNew}
         onImport={onImport}
         onBrowseTemplates={onBrowseTemplates}
+        iconNavCollapsed={iconNavCollapsed}
+        onToggleIconNav={() => setIconNavCollapsed(prev => !prev)}
       />
       <main className="flex-1 overflow-auto">
         {children}

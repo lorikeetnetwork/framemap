@@ -4,17 +4,15 @@ import {
   Network, 
   Expand, 
   Minimize2, 
-  RotateCcw, 
   Save, 
   AlertCircle, 
   LayoutGrid,
-  ArrowLeft,
   Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TreeNode from "@/components/TreeNode";
 import SearchBar from "@/components/SearchBar";
-import UserMenu from "@/components/UserMenu";
+import DashboardLayout from "@/components/DashboardLayout";
 import { FrameworkNode } from "@/types/framework";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
@@ -196,23 +194,16 @@ const FrameworkView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Logo and back button */}
+    <DashboardLayout showDialogs={false}>
+      <div className="h-full flex flex-col">
+        {/* Toolbar */}
+        <div className="flex-shrink-0 bg-background border-b border-border p-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            {/* Title */}
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/frameworks">
-                  <ArrowLeft className="w-4 h-4" />
-                </Link>
-              </Button>
-              <div className="relative">
-                <Network className="w-8 h-8 text-primary" />
-              </div>
+              <Network className="w-6 h-6 text-primary" />
               <div>
-                <h1 className="text-xl font-bold text-foreground">
+                <h1 className="text-lg font-bold text-foreground">
                   {currentMap?.name || 'Framework'}
                 </h1>
                 {currentMap?.description && (
@@ -221,7 +212,6 @@ const FrameworkView = () => {
                   </p>
                 )}
               </div>
-              {/* Unsaved changes indicator */}
               {hasUnsavedChanges && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <AlertCircle className="w-3 h-3" />
@@ -230,113 +220,83 @@ const FrameworkView = () => {
               )}
             </div>
 
-            {/* Search and controls */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
+            {/* Controls */}
+            <div className="flex flex-wrap gap-2 items-center">
               <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
                 resultCount={matchCount}
               />
-              <div className="flex gap-2 flex-wrap justify-center">
+              <Button variant="outline" size="sm" onClick={expandAll}>
+                <Expand className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Expand</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={collapseAll}>
+                <Minimize2 className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Collapse</span>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/frameworks/${id}/canvas`}>
+                  <LayoutGrid className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Canvas</span>
+                </Link>
+              </Button>
+              {hasUnsavedChanges && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={expandAll}
+                  onClick={handleManualSave}
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 >
-                  <Expand className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Expand</span>
+                  <Save className="w-4 h-4 mr-1" />
+                  Save
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={collapseAll}
-                >
-                  <Minimize2 className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Collapse</span>
-                </Button>
-                
-                {/* Canvas View Link */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                >
-                  <Link to={`/frameworks/${id}/canvas`}>
-                    <LayoutGrid className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Canvas</span>
-                  </Link>
-                </Button>
-                
-                {/* Save button */}
-                {hasUnsavedChanges && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleManualSave}
-                    className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                  >
-                    <Save className="w-4 h-4 mr-1" />
-                    Save
-                  </Button>
-                )}
-                
-                <UserMenu />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="bg-card/50 rounded-lg border border-border p-6">
+            {/* Stats bar */}
+            <div className="flex flex-wrap gap-4 mb-6 pb-4 border-b border-border text-sm text-muted-foreground">
+              <span>
+                <span className="text-primary font-semibold">{expandedNodes.size}</span> nodes expanded
+              </span>
+              {searchTerm && (
+                <span>
+                  <span className="text-primary font-semibold">{matchCount}</span> matches for "
+                  <span className="text-foreground">{searchTerm}</span>"
+                </span>
+              )}
+              <span className="ml-auto text-xs">
+                Double-click to edit • Right-click for options
+              </span>
+            </div>
+
+            {/* Tree */}
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
+                <TreeNode
+                  node={frameworkData}
+                  level={0}
+                  searchTerm={searchTerm}
+                  expandedNodes={expandedNodes}
+                  toggleNode={toggleNode}
+                  nodePath={frameworkData.name}
+                  isLast={true}
+                  matchedPaths={matchedPaths}
+                  onUpdateNode={updateNode}
+                  onAddChild={addChild}
+                  onDeleteNode={deleteNode}
+                />
               </div>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="bg-card/50 rounded-lg border border-border p-6">
-          {/* Stats bar */}
-          <div className="flex flex-wrap gap-4 mb-6 pb-4 border-b border-border text-sm text-muted-foreground">
-            <span>
-              <span className="text-primary font-semibold">{expandedNodes.size}</span> nodes expanded
-            </span>
-            {searchTerm && (
-              <span>
-                <span className="text-primary font-semibold">{matchCount}</span> matches for "
-                <span className="text-foreground">{searchTerm}</span>"
-              </span>
-            )}
-            <span className="ml-auto text-xs">
-              Double-click to edit • Right-click for options
-            </span>
-          </div>
-
-          {/* Tree */}
-          <div className="overflow-x-auto">
-            <div className="min-w-max">
-              <TreeNode
-                node={frameworkData}
-                level={0}
-                searchTerm={searchTerm}
-                expandedNodes={expandedNodes}
-                toggleNode={toggleNode}
-                nodePath={frameworkData.name}
-                isLast={true}
-                matchedPaths={matchedPaths}
-                onUpdateNode={updateNode}
-                onAddChild={addChild}
-                onDeleteNode={deleteNode}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Footer info */}
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>
-            Click on folders to expand/collapse • Click on links to open in new tab
-          </p>
-          <p className="mt-1">
-            <span className="text-primary">Double-click</span> to edit • <span className="text-primary">Right-click</span> for more options
-          </p>
-        </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
