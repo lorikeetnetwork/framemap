@@ -7,7 +7,9 @@ import {
   Save, 
   AlertCircle, 
   LayoutGrid,
-  Loader2
+  Loader2,
+  Undo2,
+  Redo2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TreeNode from "@/components/TreeNode";
@@ -16,8 +18,15 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { FrameworkNode } from "@/types/framework";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
-import { useFrameworkData } from "@/hooks/useFrameworkData";
+import { useFrameworkDataWithHistory } from "@/hooks/useFrameworkDataWithHistory";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const FrameworkView = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +47,7 @@ const FrameworkView = () => {
     }
   }, [id, updateMap]);
 
-  const frameworkState = useFrameworkData({
+  const frameworkState = useFrameworkDataWithHistory({
     onAutoSave: user ? handleAutoSave : undefined,
     autoSaveDelay: 2000,
   });
@@ -50,6 +59,12 @@ const FrameworkView = () => {
     addChild,
     deleteNode,
     loadData,
+    selectedNodePath,
+    setSelectedNodePath,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = frameworkState;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -168,6 +183,75 @@ const FrameworkView = () => {
     }
   }, [id, updateMap, frameworkData, frameworkState]);
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    enabled: !initialLoading,
+    shortcuts: [
+      {
+        key: "z",
+        ctrl: true,
+        action: () => {
+          if (canUndo) {
+            undo();
+            toast.info("Undo");
+          }
+        },
+        description: "Undo",
+      },
+      {
+        key: "y",
+        ctrl: true,
+        action: () => {
+          if (canRedo) {
+            redo();
+            toast.info("Redo");
+          }
+        },
+        description: "Redo",
+      },
+      {
+        key: "z",
+        ctrl: true,
+        shift: true,
+        action: () => {
+          if (canRedo) {
+            redo();
+            toast.info("Redo");
+          }
+        },
+        description: "Redo (alternate)",
+      },
+      {
+        key: "s",
+        ctrl: true,
+        action: () => {
+          if (hasUnsavedChanges) {
+            handleManualSave();
+          }
+        },
+        description: "Save",
+      },
+      {
+        key: "Escape",
+        action: () => {
+          setSelectedNodePath(null);
+          setSearchTerm("");
+        },
+        description: "Clear selection",
+      },
+      {
+        key: "Delete",
+        action: () => {
+          if (selectedNodePath && selectedNodePath !== frameworkData.name) {
+            deleteNode(selectedNodePath);
+            toast.info("Node deleted");
+          }
+        },
+        description: "Delete selected node",
+      },
+    ],
+  });
+
   // Loading state
   if (initialLoading || authLoading || mapsLoading) {
     return (
@@ -227,31 +311,86 @@ const FrameworkView = () => {
                 onChange={setSearchTerm}
                 resultCount={matchCount}
               />
-              <Button variant="outline" size="sm" onClick={expandAll}>
-                <Expand className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Expand</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={collapseAll}>
-                <Minimize2 className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Collapse</span>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={`/frameworks/${id}/canvas`}>
-                  <LayoutGrid className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Canvas</span>
-                </Link>
-              </Button>
-              {hasUnsavedChanges && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleManualSave}
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  <Save className="w-4 h-4 mr-1" />
-                  Save
-                </Button>
-              )}
+              
+              <TooltipProvider>
+                {/* Undo/Redo */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={undo} 
+                      disabled={!canUndo}
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={redo} 
+                      disabled={!canRedo}
+                    >
+                      <Redo2 className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={expandAll}>
+                      <Expand className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline">Expand</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Expand all nodes</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={collapseAll}>
+                      <Minimize2 className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline">Collapse</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Collapse all nodes</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/frameworks/${id}/canvas`}>
+                        <LayoutGrid className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Canvas</span>
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open canvas view</TooltipContent>
+                </Tooltip>
+
+                {hasUnsavedChanges && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManualSave}
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Save changes (Ctrl+S)</TooltipContent>
+                  </Tooltip>
+                )}
+              </TooltipProvider>
             </div>
           </div>
         </div>
@@ -271,7 +410,7 @@ const FrameworkView = () => {
                 </span>
               )}
               <span className="ml-auto text-xs">
-                Double-click to edit • Right-click for options
+                Ctrl+Z undo • Ctrl+Y redo • Del delete • Double-click to edit
               </span>
             </div>
 
@@ -290,6 +429,8 @@ const FrameworkView = () => {
                   onUpdateNode={updateNode}
                   onAddChild={addChild}
                   onDeleteNode={deleteNode}
+                  selectedNodePath={selectedNodePath}
+                  onSelectNode={setSelectedNodePath}
                 />
               </div>
             </div>
