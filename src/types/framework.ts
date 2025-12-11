@@ -1,4 +1,21 @@
-export type NodeType = "folder" | "link" | "note" | "task";
+export type NodeType = "folder" | "link" | "note" | "task" | "topic" | "subtopic" | "image" | "text";
+
+export interface LinkPreview {
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  siteName?: string;
+  fetchedAt?: string;
+}
+
+export interface ImageData {
+  url: string;
+  alt?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+}
 
 export interface NodeStyle {
   fontFamily?: string;
@@ -20,6 +37,9 @@ export interface FrameworkNode {
   completed?: boolean;
   color?: string;
   style?: NodeStyle;
+  linkPreview?: LinkPreview;
+  imageData?: ImageData;
+  content?: string;
 }
 
 export interface FrameworkSettings {
