@@ -51,9 +51,10 @@ const FrameworkCanvas = ({
   // Notify parent of position changes when dragging ends
   useEffect(() => {
     if (!isDragging && dragNodeId === null && onPositionsChange) {
-      onPositionsChange(getPositions());
+      const positions = getPositions();
+      onPositionsChange(positions);
     }
-  }, [isDragging, dragNodeId]);
+  }, [isDragging, dragNodeId, onPositionsChange, getPositions]);
 
   // Handle node drag start
   const handleNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {

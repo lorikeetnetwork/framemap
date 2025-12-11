@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 interface AddNodeDialogProps {
   onAdd: (node: FrameworkNode) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const nodeTypes: { type: NodeType; label: string; icon: React.ElementType; description: string }[] = [
@@ -26,8 +28,21 @@ const nodeTypes: { type: NodeType; label: string; icon: React.ElementType; descr
   { type: "task", label: "Task", icon: CheckSquare, description: "Actionable item" },
 ];
 
-const AddNodeDialog = ({ onAdd, trigger }: AddNodeDialogProps) => {
-  const [open, setOpen] = useState(false);
+const AddNodeDialog = ({ onAdd, trigger, open: controlledOpen, onOpenChange }: AddNodeDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Support both controlled and uncontrolled modes
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    }
+    if (!isControlled) {
+      setInternalOpen(newOpen);
+    }
+  };
+  
   const [selectedType, setSelectedType] = useState<NodeType>("folder");
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -72,17 +87,20 @@ const AddNodeDialog = ({ onAdd, trigger }: AddNodeDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        )}
-      </DialogTrigger>
+      {/* Only render trigger if provided or not in controlled mode */}
+      {(trigger || !isControlled) && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-primary">Add New Node</DialogTitle>

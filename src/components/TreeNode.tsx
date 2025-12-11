@@ -27,12 +27,15 @@ const TreeNode = ({
   matchedPaths,
   onUpdateNode,
   onAddChild,
+  onAddSibling,
   onDeleteNode,
   selectedNodePath,
   onSelectNode,
+  editingNodePath,
+  onStartEdit,
 }: TreeNodeProps) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showSiblingDialog, setShowSiblingDialog] = useState(false);
 
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedNodes.has(nodePath);
@@ -44,6 +47,7 @@ const TreeNode = ({
   const isFolder = node.type === "folder" || hasChildren;
   const isEditable = !!onUpdateNode;
   const isSelected = selectedNodePath === nodePath;
+  const isEditing = editingNodePath === nodePath;
 
   const nodeColor = node.color ? `hsl(${node.color})` : undefined;
 
@@ -72,14 +76,24 @@ const TreeNode = ({
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (!isEditable) return;
     e.stopPropagation();
-    setIsEditing(true);
+    if (onStartEdit) {
+      onStartEdit(nodePath);
+    }
   };
 
   const handleSaveEdit = (newName: string) => {
     if (onUpdateNode) {
       onUpdateNode(nodePath, { name: newName });
     }
-    setIsEditing(false);
+    if (onStartEdit) {
+      onStartEdit(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (onStartEdit) {
+      onStartEdit(null);
+    }
   };
 
   const handleAddChild = (newNode: FrameworkNode) => {
@@ -91,6 +105,13 @@ const TreeNode = ({
       }
     }
     setShowAddDialog(false);
+  };
+
+  const handleAddSibling = (newNode: FrameworkNode) => {
+    if (onAddSibling) {
+      onAddSibling(nodePath, newNode);
+    }
+    setShowSiblingDialog(false);
   };
 
   const handleDelete = () => {
@@ -210,7 +231,7 @@ const TreeNode = ({
             value={node.name}
             isEditing={isEditing}
             onSave={handleSaveEdit}
-            onCancel={() => setIsEditing(false)}
+            onCancel={handleCancelEdit}
           />
         ) : (
           <span
@@ -273,6 +294,20 @@ const TreeNode = ({
         )}
       </div>
 
+      {/* Add Child Dialog (for context menu) */}
+      <AddNodeDialog
+        onAdd={handleAddChild}
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
+
+      {/* Add Sibling Dialog */}
+      <AddNodeDialog
+        onAdd={handleAddSibling}
+        open={showSiblingDialog}
+        onOpenChange={setShowSiblingDialog}
+      />
+
       {/* Children */}
       {hasChildren && isExpanded && (
         <div
@@ -294,9 +329,12 @@ const TreeNode = ({
               matchedPaths={matchedPaths}
               onUpdateNode={onUpdateNode}
               onAddChild={onAddChild}
+              onAddSibling={onAddSibling}
               onDeleteNode={onDeleteNode}
               selectedNodePath={selectedNodePath}
               onSelectNode={onSelectNode}
+              editingNodePath={editingNodePath}
+              onStartEdit={onStartEdit}
             />
           ))}
         </div>
@@ -309,11 +347,9 @@ const TreeNode = ({
     return (
       <NodeContextMenu
         node={node}
-        onEdit={() => setIsEditing(true)}
+        onEdit={() => onStartEdit?.(nodePath)}
         onAddChild={() => setShowAddDialog(true)}
-        onAddSibling={() => {
-          // Will be handled by parent
-        }}
+        onAddSibling={() => setShowSiblingDialog(true)}
         onDelete={handleDelete}
         onSetColor={handleSetColor}
       >

@@ -65,7 +65,8 @@ export interface TreeNodeProps {
   onAddSibling?: (nodePath: string, newNode: FrameworkNode) => void;
   onDeleteNode?: (nodePath: string) => void;
   onMoveNode?: (sourcePath: string, targetPath: string, position: "before" | "after" | "inside") => void;
-  isEditing?: boolean;
   selectedNodePath?: string | null;
   onSelectNode?: (nodePath: string | null) => void;
+  editingNodePath?: string | null;
+  onStartEdit?: (nodePath: string | null) => void;
 }

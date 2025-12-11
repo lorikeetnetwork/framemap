@@ -593,7 +593,8 @@ const FrameworkView = () => {
                   onDeleteNode={deleteNode}
                   selectedNodePath={selectedNodePath}
                   onSelectNode={setSelectedNodePath}
-                  isEditing={editingNodePath === frameworkData.name}
+                  editingNodePath={editingNodePath}
+                  onStartEdit={setEditingNodePath}
                 />
               </div>
             </div>
