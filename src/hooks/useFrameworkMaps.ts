@@ -18,11 +18,12 @@ export interface FrameworkMap {
 export const useFrameworkMaps = () => {
   const { user } = useAuth();
   const [maps, setMaps] = useState<FrameworkMap[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as true to prevent premature redirects
 
   const fetchMaps = async () => {
     if (!user) {
       setMaps([]);
+      setLoading(false);
       return;
     }
 
