@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { FrameworkNode } from "@/types/framework";
 import { CanvasNode, CanvasConnection } from "@/types/canvas";
 
@@ -119,26 +119,37 @@ export function useCanvasState(
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  
+  // Track previous framework data to prevent unnecessary updates
+  const prevFrameworkDataRef = useRef<string | null>(null);
 
   // Sync nodes when framework data changes (bidirectional sync)
   useEffect(() => {
+    const currentDataString = JSON.stringify(frameworkData);
+    
+    // Skip if data hasn't actually changed
+    if (prevFrameworkDataRef.current === currentDataString) {
+      return;
+    }
+    prevFrameworkDataRef.current = currentDataString;
+    
     const newLayout = autoLayout(frameworkData);
     
-    // Preserve positions for existing nodes
-    const updatedNodes = newLayout.nodes.map(newNode => {
-      const existingNode = nodes.find(n => n.id === newNode.id);
-      if (existingNode) {
-        return { ...newNode, x: existingNode.x, y: existingNode.y };
-      }
-      // Check saved positions for new nodes
-      const saved = savedPositions?.[newNode.id];
-      if (saved) {
-        return { ...newNode, x: saved.x, y: saved.y };
-      }
-      return newNode;
+    // Preserve positions for existing nodes using functional update
+    setNodes(prevNodes => {
+      return newLayout.nodes.map(newNode => {
+        const existingNode = prevNodes.find(n => n.id === newNode.id);
+        if (existingNode) {
+          return { ...newNode, x: existingNode.x, y: existingNode.y };
+        }
+        // Check saved positions for new nodes
+        const saved = savedPositions?.[newNode.id];
+        if (saved) {
+          return { ...newNode, x: saved.x, y: saved.y };
+        }
+        return newNode;
+      });
     });
-    
-    setNodes(updatedNodes);
     setConnections(newLayout.connections);
   }, [frameworkData, savedPositions]);
 
