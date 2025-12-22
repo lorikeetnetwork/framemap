@@ -13,6 +13,8 @@ import {
   Image,
   Type,
 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { TreeNodeProps, FrameworkNode } from "@/types/framework";
 import EditableNodeLabel from "./EditableNodeLabel";
@@ -22,6 +24,10 @@ import { Button } from "@/components/ui/button";
 import LinkPreviewCard from "./cards/LinkPreviewCard";
 import ImageCard from "./cards/ImageCard";
 import TextCard from "./cards/TextCard";
+
+interface ExtendedTreeNodeProps extends TreeNodeProps {
+  onOpenEditDialog?: (nodePath: string) => void;
+}
 
 const TreeNode = ({
   node,
@@ -40,9 +46,30 @@ const TreeNode = ({
   onSelectNode,
   editingNodePath,
   onStartEdit,
-}: TreeNodeProps) => {
+  onOpenEditDialog,
+}: ExtendedTreeNodeProps) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSiblingDialog, setShowSiblingDialog] = useState(false);
+
+  // DnD setup
+  const isRootNode = !nodePath.includes("/");
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: nodePath,
+    disabled: isRootNode, // Disable drag for root node
+  });
+
+  const sortableStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedNodes.has(nodePath);
@@ -190,7 +217,11 @@ const TreeNode = ({
   };
 
   const nodeContent = (
-    <div className="relative">
+    <div 
+      ref={setNodeRef} 
+      style={sortableStyle} 
+      className={cn("relative", isDragging && "z-50")}
+    >
       {/* Horizontal connector line */}
       {level > 0 && (
         <div
@@ -232,8 +263,14 @@ const TreeNode = ({
         style={nodeColor ? { borderLeft: `3px solid ${nodeColor}` } : undefined}
       >
         {/* Drag handle - only show in edit mode */}
-        {isEditable && (
-          <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-50 cursor-grab flex-shrink-0 mt-0.5" />
+        {isEditable && !isRootNode && (
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="flex items-center"
+          >
+            <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-50 cursor-grab flex-shrink-0 mt-0.5" />
+          </div>
         )}
 
         {/* Expand/collapse icon or node type icon */}
@@ -391,6 +428,7 @@ const TreeNode = ({
               onSelectNode={onSelectNode}
               editingNodePath={editingNodePath}
               onStartEdit={onStartEdit}
+              onOpenEditDialog={onOpenEditDialog}
             />
           ))}
         </div>
@@ -404,6 +442,7 @@ const TreeNode = ({
       <NodeContextMenu
         node={node}
         onEdit={() => onStartEdit?.(nodePath)}
+        onEditProperties={() => onOpenEditDialog?.(nodePath)}
         onAddChild={() => setShowAddDialog(true)}
         onAddSibling={() => setShowSiblingDialog(true)}
         onDelete={handleDelete}
