@@ -17,6 +17,8 @@ import TreeNode from "@/components/TreeNode";
 import SearchBar from "@/components/SearchBar";
 import DashboardLayout from "@/components/DashboardLayout";
 import NodeStylePanel from "@/components/NodeStylePanel";
+import DndTreeWrapper from "@/components/DndTreeWrapper";
+import EditNodeDialog from "@/components/EditNodeDialog";
 import { FrameworkNode, NodeStyle } from "@/types/framework";
 import { useAuth } from "@/hooks/useAuth";
 import { useFrameworkMaps } from "@/hooks/useFrameworkMaps";
@@ -68,6 +70,7 @@ const FrameworkView = () => {
     addChild,
     addSibling,
     deleteNode,
+    moveNode,
     loadData,
     selectedNodePath,
     selectedNode,
@@ -82,6 +85,23 @@ const FrameworkView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set([frameworkData.name]));
   const [editingNodePath, setEditingNodePath] = useState<string | null>(null);
+  const [editDialogPath, setEditDialogPath] = useState<string | null>(null);
+  const [editDialogNode, setEditDialogNode] = useState<FrameworkNode | null>(null);
+
+  // Open edit dialog for a node
+  const openEditDialog = useCallback((nodePath: string) => {
+    const result = findNodeByPath(nodePath);
+    if (result?.node) {
+      setEditDialogPath(nodePath);
+      setEditDialogNode(result.node);
+    }
+  }, [findNodeByPath]);
+
+  // Handle save from edit dialog
+  const handleEditDialogSave = useCallback((nodePath: string, updates: Partial<FrameworkNode>) => {
+    updateNode(nodePath, updates);
+    toast.success("Node updated");
+  }, [updateNode]);
 
   // Load map data when available
   useEffect(() => {
@@ -575,31 +595,53 @@ const FrameworkView = () => {
               </span>
             </div>
 
-            {/* Tree */}
+            {/* Tree with DnD wrapper */}
             <div className="overflow-x-auto" ref={treeContainerRef}>
               <div className="min-w-max">
-                <TreeNode
-                  node={frameworkData}
-                  level={0}
-                  searchTerm={searchTerm}
+                <DndTreeWrapper
+                  frameworkData={frameworkData}
                   expandedNodes={expandedNodes}
-                  toggleNode={toggleNode}
-                  nodePath={frameworkData.name}
-                  isLast={true}
-                  matchedPaths={matchedPaths}
-                  onUpdateNode={updateNode}
-                  onAddChild={addChild}
-                  onAddSibling={addSibling}
-                  onDeleteNode={deleteNode}
-                  selectedNodePath={selectedNodePath}
-                  onSelectNode={setSelectedNodePath}
-                  editingNodePath={editingNodePath}
-                  onStartEdit={setEditingNodePath}
-                />
+                  onMoveNode={moveNode}
+                >
+                  <TreeNode
+                    node={frameworkData}
+                    level={0}
+                    searchTerm={searchTerm}
+                    expandedNodes={expandedNodes}
+                    toggleNode={toggleNode}
+                    nodePath={frameworkData.name}
+                    isLast={true}
+                    matchedPaths={matchedPaths}
+                    onUpdateNode={updateNode}
+                    onAddChild={addChild}
+                    onAddSibling={addSibling}
+                    onDeleteNode={deleteNode}
+                    selectedNodePath={selectedNodePath}
+                    onSelectNode={setSelectedNodePath}
+                    editingNodePath={editingNodePath}
+                    onStartEdit={setEditingNodePath}
+                    onOpenEditDialog={openEditDialog}
+                  />
+                </DndTreeWrapper>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Edit Node Dialog */}
+        <EditNodeDialog
+          node={editDialogNode}
+          nodePath={editDialogPath}
+          open={!!editDialogPath}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditDialogPath(null);
+              setEditDialogNode(null);
+            }
+          }}
+          onSave={handleEditDialogSave}
+          onDelete={deleteNode}
+        />
       </div>
     </DashboardLayout>
   );

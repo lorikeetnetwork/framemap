@@ -1,4 +1,4 @@
-import { Edit2, Plus, Trash2, Copy, Palette, FolderPlus } from "lucide-react";
+import { Edit2, Plus, Trash2, Palette, FolderPlus, Settings2 } from "lucide-react";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -15,6 +15,7 @@ interface NodeContextMenuProps {
   children: React.ReactNode;
   node: FrameworkNode;
   onEdit: () => void;
+  onEditProperties?: () => void;
   onAddChild: () => void;
   onAddSibling: () => void;
   onDelete: () => void;
@@ -35,6 +36,7 @@ const NodeContextMenu = ({
   children,
   node,
   onEdit,
+  onEditProperties,
   onAddChild,
   onAddSibling,
   onDelete,
@@ -49,8 +51,15 @@ const NodeContextMenu = ({
       <ContextMenuContent className="w-48">
         <ContextMenuItem onClick={onEdit} className="gap-2">
           <Edit2 className="h-4 w-4" />
-          Edit
+          Edit Name
         </ContextMenuItem>
+
+        {onEditProperties && (
+          <ContextMenuItem onClick={onEditProperties} className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            Edit Properties
+          </ContextMenuItem>
+        )}
 
         {isFolder && (
           <ContextMenuItem onClick={onAddChild} className="gap-2">
