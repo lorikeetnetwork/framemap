@@ -15,9 +15,23 @@ export interface CanvasConnection {
   to: string;
 }
 
+export type LineStyle = "solid" | "dashed" | "dotted";
+export type ArrowType = "none" | "start" | "end" | "both";
+
+export interface Relationship {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label?: string;
+  lineStyle: LineStyle;
+  lineColor?: string;
+  arrowType: ArrowType;
+}
+
 export interface CanvasState {
   nodes: CanvasNode[];
   connections: CanvasConnection[];
+  relationships: Relationship[];
   zoom: number;
   panX: number;
   panY: number;
